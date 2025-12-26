@@ -11,17 +11,33 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
-import { Product } from '../entity/product.entity';
+import { CategoryService } from '../category/category.service';
 
 @Controller('products')
 export class ProductController {
-  constructor(private readonly productService: ProductService) {}
+  constructor(
+    private readonly productService: ProductService,
+    private readonly categoryService: CategoryService,
+  ) {}
 
   // CREATE PRODUCT
   @Post('/createProduct')
-  async create(@Body() productData: Partial<Product>) {
+  async create(@Body() productData: any) {
     try {
-      const product = await this.productService.create(productData);
+      const { categoryId, ...rest } = productData;
+
+      if (!categoryId) {
+        throw new HttpException('Category is required', HttpStatus.BAD_REQUEST);
+      }
+
+      const category = await this.categoryService.findOne(Number(categoryId));
+      if (!category) {
+        throw new HttpException('Category not found', HttpStatus.NOT_FOUND);
+      }
+
+      const productToSave = { ...rest, category };
+
+      const product = await this.productService.create(productToSave);
       return {
         success: true,
         message: 'Product created successfully',
@@ -31,9 +47,9 @@ export class ProductController {
       throw new HttpException(
         {
           success: false,
-          message: 'Failed to create product',
+          message: error.message || 'Failed to create product',
         },
-        HttpStatus.BAD_REQUEST,
+        error.status || HttpStatus.BAD_REQUEST,
       );
     }
   }
@@ -73,9 +89,9 @@ export class ProductController {
       throw new HttpException(
         {
           success: false,
-          message: 'Product not found',
+          message: error.message || 'Product not found',
         },
-        HttpStatus.NOT_FOUND,
+        error.status || HttpStatus.NOT_FOUND,
       );
     }
   }
@@ -84,10 +100,20 @@ export class ProductController {
   @Put('/updateProduct/:id')
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateData: Partial<Product>,
+    @Body() updateData: any,
   ) {
     try {
-      const product = await this.productService.update(id, updateData);
+      const { categoryId, ...rest } = updateData;
+
+      if (categoryId) {
+        const category = await this.categoryService.findOne(Number(categoryId));
+        if (!category) {
+          throw new HttpException('Category not found', HttpStatus.NOT_FOUND);
+        }
+        rest.category = category;
+      }
+
+      const product = await this.productService.update(id, rest);
       return {
         success: true,
         message: 'Product updated successfully',
@@ -97,9 +123,9 @@ export class ProductController {
       throw new HttpException(
         {
           success: false,
-          message: 'Failed to update product',
+          message: error.message || 'Failed to update product',
         },
-        HttpStatus.BAD_REQUEST,
+        error.status || HttpStatus.BAD_REQUEST,
       );
     }
   }
@@ -117,9 +143,9 @@ export class ProductController {
       throw new HttpException(
         {
           success: false,
-          message: 'Failed to delete product',
+          message: error.message || 'Failed to delete product',
         },
-        HttpStatus.BAD_REQUEST,
+        error.status || HttpStatus.BAD_REQUEST,
       );
     }
   }

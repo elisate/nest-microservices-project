@@ -5,8 +5,11 @@ import {
   CreateDateColumn, 
   UpdateDateColumn,
   BeforeInsert,
-  BeforeUpdate
+  BeforeUpdate,
+  ManyToOne,
+  JoinColumn
 } from 'typeorm';
+import { Category } from './category.entity'; // import your Category entity
 
 @Entity()
 export class Product {
@@ -26,13 +29,15 @@ export class Product {
   stock: number;
 
   @Column({ default: true })
-  isActive: boolean; // whether the product is enabled/listed
+  isActive: boolean;
 
   @Column({ default: false })
-  inStock: boolean; // automatically true if stock > 0
+  inStock: boolean;
 
-  @Column({ length: 50, nullable: true })
-  category: string;
+  // Many products can belong to one category
+  @ManyToOne(() => Category, (category) => category.products, { eager: true })
+  @JoinColumn({ name: 'categoryId' }) // optional: customize column name
+  category: Category;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
@@ -40,7 +45,6 @@ export class Product {
   @UpdateDateColumn({ type: 'timestamp' })
   updatedAt: Date;
 
-  // Automatically update inStock before insert or update
   @BeforeInsert()
   @BeforeUpdate()
   updateInStock() {

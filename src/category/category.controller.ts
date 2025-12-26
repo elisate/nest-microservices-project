@@ -24,8 +24,8 @@ export class CategoryController {
       return await this.categoryService.create(categoryData);
     } catch (error) {
       throw new HttpException(
-        'Failed to create category',
-        HttpStatus.BAD_REQUEST,
+        error.message || 'Failed to create category',
+        error.status || HttpStatus.BAD_REQUEST,
       );
     }
   }
@@ -37,8 +37,8 @@ export class CategoryController {
       return await this.categoryService.findAll();
     } catch (error) {
       throw new HttpException(
-        'Failed to fetch categories',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        error.message || 'Failed to fetch categories',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -53,7 +53,7 @@ export class CategoryController {
     } catch (error) {
       throw new HttpException(
         error.message || 'Category not found',
-        HttpStatus.NOT_FOUND,
+        error.status || HttpStatus.NOT_FOUND,
       );
     }
   }
@@ -68,8 +68,8 @@ export class CategoryController {
       return await this.categoryService.update(id, updateData);
     } catch (error) {
       throw new HttpException(
-        'Failed to update category',
-        HttpStatus.BAD_REQUEST,
+        error.message || 'Failed to update category',
+        error.status || HttpStatus.BAD_REQUEST,
       );
     }
   }
@@ -83,8 +83,8 @@ export class CategoryController {
       return await this.categoryService.remove(id);
     } catch (error) {
       throw new HttpException(
-        'Failed to delete category',
-        HttpStatus.NOT_FOUND,
+        error.message || 'Failed to delete category',
+        error.status || HttpStatus.NOT_FOUND,
       );
     }
   }

@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Category } from '../entity/category.entity';
@@ -10,8 +14,17 @@ export class CategoryService {
     private readonly categoryRepository: Repository<Category>,
   ) {}
 
-  // Create category
+  // Create category (NO DUPLICATES)
   async create(categoryData: Partial<Category>): Promise<Category> {
+    // Check if category name already exists
+    const existingCategory = await this.categoryRepository.findOne({
+      where: { name: categoryData.name },
+    });
+
+    if (existingCategory) {
+      throw new BadRequestException('Category already exists');
+    }
+
     const category = this.categoryRepository.create(categoryData);
     return this.categoryRepository.save(category);
   }
@@ -19,7 +32,7 @@ export class CategoryService {
   // Get all categories
   async findAll(): Promise<Category[]> {
     return this.categoryRepository.find({
-      relations: ['products'], // optional
+      relations: ['products'],
     });
   }
 
@@ -37,9 +50,20 @@ export class CategoryService {
     return category;
   }
 
-  // Update category
+  // Update category (prevent duplicate name on update)
   async update(id: number, updateData: Partial<Category>): Promise<Category> {
     const category = await this.findOne(id);
+
+    if (updateData.name) {
+      const existingCategory = await this.categoryRepository.findOne({
+        where: { name: updateData.name },
+      });
+
+      if (existingCategory && existingCategory.id !== id) {
+        throw new BadRequestException('Category already exists');
+      }
+    }
+
     Object.assign(category, updateData);
     return this.categoryRepository.save(category);
   }
