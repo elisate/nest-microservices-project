@@ -21,38 +21,27 @@ export class ProductController {
   ) {}
 
   // CREATE PRODUCT
-  @Post('/createProduct')
-  async create(@Body() productData: any) {
-    try {
-      const { categoryId, ...rest } = productData;
+@Post('/createProduct')
+async create(@Body() productData: any) {
+  try {
+    const product = await this.productService.create(productData);
 
-      if (!categoryId) {
-        throw new HttpException('Category is required', HttpStatus.BAD_REQUEST);
-      }
-
-      const category = await this.categoryService.findOne(Number(categoryId));
-      if (!category) {
-        throw new HttpException('Category not found', HttpStatus.NOT_FOUND);
-      }
-
-      const productToSave = { ...rest, category };
-
-      const product = await this.productService.create(productToSave);
-      return {
-        success: true,
-        message: 'Product created successfully',
-        data: product,
-      };
-    } catch (error) {
-      throw new HttpException(
-        {
-          success: false,
-          message: error.message || 'Failed to create product',
-        },
-        error.status || HttpStatus.BAD_REQUEST,
-      );
-    }
+    return {
+      success: true,
+      message: 'Product created successfully',
+      data: product,
+    };
+  } catch (error) {
+    throw new HttpException(
+      {
+        success: false,
+        message: error.message || 'Failed to create product',
+      },
+      error.status || HttpStatus.BAD_REQUEST,
+    );
   }
+}
+
 
   // GET ALL PRODUCTS
   @Get('/getAllProducts')
